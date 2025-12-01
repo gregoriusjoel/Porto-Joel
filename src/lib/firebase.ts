@@ -3,7 +3,7 @@ import { getAuth, Auth } from 'firebase/auth';
 
 const isFirebaseConfigured = 
   process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
-  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'AIzaSyA2Jp-pW2dZfhytfccdlHE6OJsc5ymJVYE' &&
+  process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'your_api_key_here' &&
   process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
   process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
 
@@ -25,7 +25,8 @@ if (isFirebaseConfigured) {
 } else {
   if (typeof window !== 'undefined') {
     console.warn(
-      '⚠️ Firebase not configured. Please set up your Firebase credentials\n'
+      '⚠️ Firebase not configured. Please set up your Firebase credentials in .env.local\n' +
+      'See FIREBASE_SETUP.md for instructions.'
     );
   }
 }
