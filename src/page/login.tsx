@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, isFirebaseConfigured } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 
@@ -15,6 +15,10 @@ export default function Login() {
 
   useEffect(() => {
     // Check if user is already logged in
+    if (!isFirebaseConfigured || !auth) {
+      return;
+    }
+    
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         router.push('/');
@@ -42,6 +46,12 @@ export default function Login() {
     setError('');
     setLoading(true);
 
+    if (!isFirebaseConfigured || !auth) {
+      setError('Firebase belum dikonfigurasi.');
+      setLoading(false);
+      return;
+    }
+
     try {
       await signInWithEmailAndPassword(auth, email, password);
       router.push('/');
@@ -55,6 +65,12 @@ export default function Login() {
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
+
+    if (!isFirebaseConfigured || !auth) {
+      setError('Firebase belum dikonfigurasi.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const provider = new GoogleAuthProvider();

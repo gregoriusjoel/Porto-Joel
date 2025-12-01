@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signInAnonymously } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, isFirebaseConfigured } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import { gsap } from 'gsap';
 
@@ -14,12 +14,15 @@ export default function LoginPage() {
   const router = useRouter();
 
   useEffect(() => {
-    // Check if user is already logged in
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        router.push('/');
-      }
-    });
+    let unsubscribe: (() => void) | undefined;
+    
+    if (isFirebaseConfigured && auth) {
+      unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user) {
+          router.push('/');
+        }
+      });
+    }
 
     // GSAP animations
     gsap.fromTo(
@@ -34,13 +37,21 @@ export default function LoginPage() {
       { scale: 1, rotation: 0, duration: 1, ease: 'back.out(1.7)', delay: 0.3 }
     );
 
-    return () => unsubscribe();
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, [router]);
 
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
+    if (!isFirebaseConfigured || !auth) {
+      setError('Firebase belum dikonfigurasi. Silakan setup Firebase terlebih dahulu.');
+      setLoading(false);
+      return;
+    }
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
@@ -56,6 +67,12 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
 
+    if (!isFirebaseConfigured || !auth) {
+      setError('Firebase belum dikonfigurasi. Silakan setup Firebase terlebih dahulu.');
+      setLoading(false);
+      return;
+    }
+
     try {
       const provider = new GoogleAuthProvider();
       await signInWithPopup(auth, provider);
@@ -70,6 +87,12 @@ export default function LoginPage() {
   const handleAnonymousLogin = async () => {
     setError('');
     setLoading(true);
+
+    if (!isFirebaseConfigured || !auth) {
+      setError('Firebase belum dikonfigurasi. Silakan setup Firebase terlebih dahulu.');
+      setLoading(false);
+      return;
+    }
 
     try {
       await signInAnonymously(auth);
@@ -101,12 +124,27 @@ export default function LoginPage() {
 
         {/* Login Form */}
         <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-8 shadow-2xl">
+          {/* Firebase Setup Warning */}
+          {!isFirebaseConfigured && (
+            <div className="mb-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+              <p className="text-yellow-400 text-sm font-semibold mb-2">⚠️ Firebase Belum Dikonfigurasi</p>
+              <p className="text-yellow-300 text-xs mb-2">
+                Silakan setup Firebase credentials di file <code className="bg-black/30 px-1 py-0.5 rounded">.env.local</code>
+              </p>
+              <p className="text-yellow-300 text-xs">
+                Lihat <code className="bg-black/30 px-1 py-0.5 rounded">FIREBASE_SETUP.md</code> untuk panduan lengkap.
+              </p>
+            </div>
+          )}
+
           {/* Dummy Login Info */}
-          <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
-            <p className="text-blue-400 text-xs font-semibold mb-1">Demo Account:</p>
-            <p className="text-blue-300 text-xs">Email: emilys@creativox.com</p>
-            <p className="text-blue-300 text-xs">Password: emilyspass</p>
-          </div>
+          {isFirebaseConfigured && (
+            <div className="mb-4 p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+              <p className="text-blue-400 text-xs font-semibold mb-1">Demo Account:</p>
+              <p className="text-blue-300 text-xs">Email: emilys@creativox.com</p>
+              <p className="text-blue-300 text-xs">Password: emilyspass</p>
+            </div>
+          )}
 
           {error && (
             <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg">
